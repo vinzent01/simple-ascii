@@ -1,5 +1,4 @@
 # simple ascii
-
 this is an simple project, an program made with pygame that enables drawing ascii without the problems of an text editor like a line break, characters positioning, etc, it has an infinite canvas where you can draw a character typing with the keyboard. 
 
 to save the art you must press **ctrl + s**, this will create a new folder if not exists called "save" with an art{num}.txt, the result art is only the area that you have draw
@@ -15,3 +14,7 @@ to save the art you must press **ctrl + s**, this will create a new folder if no
 some improvements can be made in the future such as an proper executable that runs on mac, linux and windows.
 enabling custom fonts, and custom color, multiple layers of ascii
 
+## update about making an executable
+python's pyinstaller is unable to make a cross platform build from one machine, my conclusion is that python is an bad language for such things as generate an executable.
+
+maybe i remade this project in another language.
