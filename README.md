@@ -3,6 +3,27 @@ this is an simple project, an program made with pygame that enables drawing asci
 
 to save the art you must press **ctrl + s**, this will create a new folder if not exists called "save" with an art{num}.txt, the result art is only the area that you have draw
 
+# Some arts i made
+
+```
+         .-----------                     
+        /  \         \                    
+       /    \         \                   
+      /   |  \         \                  
+     /  __._  \---------\ some box.txt    
+    / ._  |   /         /   what's inside?
+   /  | \ |  /     -.../                  
+  /   \_.   /     /.../                   
+ /___      /     /. ./                    
+/ \ /     /     /.../                     
+\  \ -.  /      \../                      
+ \  \./ /       \;/                       
+  \    /       \ /                        
+   \  /         /                         
+    \/________\/                          
+```
+
+
 ## Requirements
 
 - the python version used in this project is the current last version at the time **Python 3.13.7**
