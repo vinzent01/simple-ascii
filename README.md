@@ -3,7 +3,16 @@ this is an simple project, an program made with pygame that enables drawing asci
 
 to save the art you must press **ctrl + s**, this will create a new folder if not exists called "save" with an art{num}.txt, the result art is only the area that you have draw
 
-# Some arts i made
+## Commands
+
+argument commands:
+-- load - loads an art in form of text
+
+keyboard commands:
+- Ctrl + S - saves the art
+- Ctrl + X - clears the screen
+
+## Some arts i made
 
 ```
          .-----------                     

@@ -2,6 +2,7 @@ import pygame
 import string
 import os
 from pathlib import Path
+import argparse
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
@@ -22,6 +23,24 @@ input_position = (0,0)
 camera_position = (0,0)
 space_pressed = False
 mouse_pressed = False
+
+def load_art(path):
+    p = Path(path)
+
+    if p.is_file():
+        ascii = p.read_text("utf8")
+
+        ascii = ascii.replace("```\n", "") # remove first part
+        ascii = ascii.replace("```", "") # remove last part
+
+        position = (0,0)
+
+        for line in ascii.splitlines():
+            for char in line:
+                add_char_at(char, position)
+                position = (position[0] + 1, position[1])
+            
+            position = (0, position[1] + 1)
 
 def screen_to_canvas(screen_coordinates: tuple):
     return (screen_coordinates[0] + camera_position[0],
@@ -147,96 +166,109 @@ def create_ascii_from_map():
     for y in range(top_left_corner[1],bottom_right_corner[1] + 1):
         for x in range(top_left_corner[0], bottom_right_corner[0] + 1):
             char_at_pos = get_char_at((x,y))
-            print(f"char at: {char_at_pos}")
             ascii_str += char_at_pos
         ascii_str+="\n"
 
     ascii_str += "```"
 
-    print(f"min : {top_left_corner[0]} {top_left_corner[0]} max: {bottom_right_corner[0]} {bottom_right_corner[1]}")
-    print("SAVED: ")
-    print(ascii_str)
     return ascii_str
 
-while running:
 
-    mouse_pos = pygame.mouse.get_pos()
-    mouse_char_pos = canvas_to_char(screen_to_canvas(mouse_pos))
+def main():
+    global running, screen, font, char_width, char_height, render_input, input_position,camera_position, space_pressed, mouse_pressed, char_map
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            break
+    #parse arguments
+    parser = argparse.ArgumentParser(description="ascii art tool")
+    parser.add_argument("--load", type=str, help="loads an ascii art text")
+    args = parser.parse_args()
+
+    if (args.load):
+        print(f"loading from {args.load}...")
+        load_art(args.load)
+
+    # loop
+    while running:
+
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_char_pos = canvas_to_char(screen_to_canvas(mouse_pos))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                break
+                
+            elif event.type == pygame.KEYDOWN:
+
+                if (render_input):
+                    char = event.unicode
+                    if event.key == pygame.K_SPACE:
+                        space_pressed = True
+
+                    elif event.key == pygame.K_UP:
+                        input_position = (input_position[0], input_position[1] -1)
+
+                    elif event.key == pygame.K_DOWN:
+                        input_position = (input_position[0], input_position[1] +1)
+                    
+                    elif event.key == pygame.K_LEFT:
+                        input_position = (input_position[0] -1, input_position[1])
+                    
+                    elif event.key == pygame.K_RIGHT:
+                        input_position = (input_position[0] +1, input_position[1])
+
+                    elif event.key == pygame.K_BACKSPACE:
+                        remove_char_at(input_position)
+                        input_position = (input_position[0] - 1, input_position[1])
+
+                    elif (char and char in string.printable and char not in '\t\n\r\x0b\x0c'):
+                        add_char_at(event.unicode,input_position)
+                        input_position = (input_position[0] + 1, input_position[1])
+                    
+                    elif event.key == pygame.K_s and (event.mod & pygame.KMOD_CTRL):
+                        save(
+                            create_ascii_from_map()
+                        )
+                    elif event.key == pygame.K_x and (event.mod & pygame.KMOD_CTRL):
+                        char_map = []
+
+            elif event.type == pygame.MOUSEMOTION:
+                if space_pressed and mouse_pressed:
+                    x,y = event.rel
+                    camera_position = (camera_position[0] + -x, camera_position[1] + -y)
             
-        elif event.type == pygame.KEYDOWN:
-
-            if (render_input):
-                char = event.unicode
-                print(f"Key pressed {char}")
+            elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
-                    space_pressed = True
+                    space_pressed = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                render_input = True
+                input_position = mouse_char_pos
+                mouse_pressed = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                mouse_pressed= False
 
-                elif event.key == pygame.K_UP:
-                    input_position = (input_position[0], input_position[1] -1)
+        screen_input_position = canvas_to_screen(char_to_canvas(input_position))
 
-                elif event.key == pygame.K_DOWN:
-                    input_position = (input_position[0], input_position[1] +1)
-                
-                elif event.key == pygame.K_LEFT:
-                    input_position = (input_position[0] -1, input_position[1])
-                
-                elif event.key == pygame.K_RIGHT:
-                    input_position = (input_position[0] +1, input_position[1])
+        # Verifica se cursor passou das extremidades da tela
+        if screen_input_position[0] > screen.get_size()[0]:
+            camera_position = (camera_position[0] + char_width, camera_position[1])
 
-                elif event.key == pygame.K_BACKSPACE:
-                    remove_char_at(input_position)
-                    input_position = (input_position[0] - 1, input_position[1])
+        if screen_input_position[1] > screen.get_size()[1]:
+            camera_position = (camera_position[0], camera_position[1] + char_height)
+        screen.fill("black")
 
-                elif (char and char in string.printable and char not in '\t\n\r\x0b\x0c'):
-                    add_char_at(event.unicode,input_position)
-                    input_position = (input_position[0] + 1, input_position[1])
-                
-                elif event.key == pygame.K_s and (event.mod & pygame.KMOD_CTRL):
-                    save(
-                        create_ascii_from_map()
-                    )
+        # render
+        render_char_map()
 
-        elif event.type == pygame.MOUSEMOTION:
-            if space_pressed and mouse_pressed:
-                x,y = event.rel
-                camera_position = (camera_position[0] + -x, camera_position[1] + -y)
-        
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                space_pressed = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            render_input = True
-            input_position = mouse_char_pos
-            mouse_pressed = True
-        elif event.type == pygame.MOUSEBUTTONUP:
-            mouse_pressed= False
+        text_surface= font.render(f"pos : {camera_position[0]}, {camera_position[1]}", False, (255,255,255))
+        screen.blit(text_surface, (0,0))
 
-    screen_input_position = canvas_to_screen(char_to_canvas(input_position))
+        if (render_input):
+            render_input_at(input_position)
 
-    # Verifica se cursor passou das extremidades da tela
-    if screen_input_position[0] > screen.get_size()[0]:
-        camera_position = (camera_position[0] + char_width, camera_position[1])
+        # show
+        pygame.display.flip()
 
-    if screen_input_position[1] > screen.get_size()[1]:
-        camera_position = (camera_position[0], camera_position[1] + char_height)
-    screen.fill("black")
+        clock.tick(60)
+    pygame.quit()
 
-    # render
-    render_char_map()
-
-    text_surface= font.render(f"pos : {camera_position[0]}, {camera_position[1]}", False, (255,255,255))
-    screen.blit(text_surface, (0,0))
-
-    if (render_input):
-        render_input_at(input_position)
-
-    # show
-    pygame.display.flip()
-
-    clock.tick(60)
-pygame.quit()
+main()
