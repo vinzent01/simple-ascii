@@ -108,5 +108,5 @@ run (linux)
 ```
 
 ## Improvements
-some improvements can be made in the future such as an proper executable that runs on mac, linux and windows.
-enabling custom fonts, and custom color, multiple layers of ascii
+some improvements can be made in the future such as enabling custom fonts, and custom color, multiple layers of ascii
+select area or region and cut, and copy to another
