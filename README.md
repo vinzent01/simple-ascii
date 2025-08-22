@@ -110,8 +110,3 @@ run (linux)
 ## Improvements
 some improvements can be made in the future such as an proper executable that runs on mac, linux and windows.
 enabling custom fonts, and custom color, multiple layers of ascii
-
-## update about making an executable
-python's pyinstaller is unable to make a cross platform build from one machine, my conclusion is that python is an bad language for such things as generate an executable.
-
-maybe i remade this project in another language.
