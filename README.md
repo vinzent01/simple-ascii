@@ -14,6 +14,40 @@ to save the art you must press **ctrl + s**, this will create a new folder if no
 ## Some arts i made
 
 ```
+             .                                                 
+            /|\                                                
+          /  |  \                                              
+        /    |    \                                            
+      /     |       \                                          
+    /       |         \              An platonic form emerges..
+  /        |            \                       An "Octaedran"!
+/__        |           ___\                                    
+\  --___   |     __----   /                                    
+  \     --__ __--       /                                      
+    \       |         /                                        
+      \     |       /                                          
+        \   |     /                                            
+          \  |  /                                              
+            \|/                                                
+             '                                                 
+                .  .                                           
+                \ \ \                                          
+                 . \.\                                         
+          .      / /\ ;                                        
+         / \    / / / |                                        
+          \ -..\   /  .                                        
+           '    .    /                                         
+           \        /                                          
+           '       -                                           
+           /  ---/                                             
+         ./     /                                              
+        /      /                                               
+       /      /                                                
+     --      /                                                 
+            .                                                  
+```
+
+```
          .-----------                     
         /  \         \                    
        /    \         \                   
