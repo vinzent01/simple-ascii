@@ -7,6 +7,7 @@ to save the art you must press **ctrl + s**, this will create a new folder if no
 - Ctrl + S - saves the art
 - Ctrl + X - clears the screen
 - Ctrl + v - pastes content from clipboard to the canvas
+- Ctrl + h - shows the help commands
 - typing keys to the canvas
 - you can drag the camera arround the canvas with space + left button
 

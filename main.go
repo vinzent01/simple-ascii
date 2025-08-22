@@ -340,6 +340,38 @@ func PasteASCIIAtCanvas(char_canvas CharCanvas, ascii string, startPos rl.Vector
 	return char_canvas
 }
 
+func DrawHelpPanel(screenWidth, screenHeight int32, font rl.Font) {
+	helpText := "COMMANDS:\n" +
+		"Ctrl + S - saves the art\n" +
+		"Ctrl + X - clears the screen\n" +
+		"Ctrl + V - pastes content from clipboard to the canvas\n" +
+		"Ctrl + H - shows help screen\n" +
+		"Typing keys to the canvas\n" +
+		"Drag camera: hold SPACE + left mouse button"
+
+	panelfontSize := float32(16.0)
+	text_size := rl.MeasureTextEx(font, helpText, panelfontSize, 0)
+	panelWidth := int32(text_size.X + 40)
+	panelHeight := int32(text_size.Y + 40)
+
+	panelX := (screenWidth - panelWidth) / 2
+	panelY := (screenHeight - panelHeight) / 2
+
+	rl.DrawRectangle(panelX, panelY, panelWidth, panelHeight, rl.DarkGray)
+	rl.DrawRectangleLines(panelX, panelY, panelWidth, panelHeight, rl.White)
+	rl.DrawTextEx(
+		font,
+		helpText,
+		rl.Vector2{
+			X: float32(panelX + 10),
+			Y: float32(panelY + 10),
+		},
+		panelfontSize,
+		0,
+		rl.White,
+	)
+}
+
 func main() {
 	fmt.Println("Hello, world")
 	var screen_width int32 = 800
@@ -377,6 +409,8 @@ func main() {
 	camera.Offset = rl.Vector2{X: float32(screen_width) / 2.0, Y: float32(screen_height) / 2.0}
 	camera.Target = rl.Vector2{X: 0.0, Y: 0.0}
 	camera.Zoom = 1.0
+
+	showHelp := false
 
 	// Load fonts
 	for !rl.WindowShouldClose() {
@@ -418,6 +452,8 @@ func main() {
 			// paste input
 			clipboardText := string(clipboard.Read(clipboard.FmtText))
 			char_canvas = PasteASCIIAtCanvas(char_canvas, clipboardText, cursor.Position)
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyH) {
+			showHelp = !showHelp
 		}
 
 		if rl.IsKeyPressed(rl.KeyF11) {
@@ -446,6 +482,25 @@ func main() {
 		draw_canvas(char_canvas, current_font, font_size)
 		cursor.Draw(current_font, font_size)
 		rl.EndMode2D()
+
+		if showHelp {
+			DrawHelpPanel(int32(rl.GetScreenWidth()), int32(rl.GetScreenHeight()), current_font)
+		}
+
+		// draws the help text remember
+		help_remember := "Ctrl + h (help)"
+		help_size := rl.MeasureTextEx(current_font, help_remember, 16, 0)
+
+		rl.DrawTextEx(
+			current_font, help_remember,
+			rl.Vector2{
+				X: float32(rl.GetScreenWidth()) - help_size.X - 10,
+				Y: 0,
+			},
+			16,
+			0,
+			rl.Yellow,
+		)
 
 		rl.EndDrawing()
 	}
