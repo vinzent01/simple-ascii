@@ -5,11 +5,14 @@ to save the art you must press **ctrl + s**, this will create a new folder if no
 
 ## Commands
 - Ctrl + S - saves the art
-- Ctrl + X - clears the screen
+- Left Click + drag - selects an area
+- Ctrl + X - cut selection
+- Ctrl + C - copy selection
 - Ctrl + v - pastes content from clipboard to the canvas
 - Ctrl + h - shows the help commands
 - typing keys to the canvas
 - you can drag the camera arround the canvas with space + left button
+- space + left button - drag camera"
 
 ## Some arts i made
 
@@ -115,11 +118,6 @@ __ | .| __                   .
                     \ |               |           
                      \|_______________|           
 ```
-
-
-## Requirements
-- the python version used in this project is the current last version at the time **Python 3.13.7**
-- The only requirement is **pygame==2.6.1**
 
 # installing 
 install the version of your operating system from the releases page of the repo

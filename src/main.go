@@ -169,11 +169,13 @@ func paste_clipboard_to_canvas(canvas *CharCanvas, ascii string, startPos rl.Vec
 func DrawHelpPanel(screenWidth, screenHeight int32, font rl.Font) {
 	helpText := "COMMANDS:\n" +
 		"Ctrl + S - saves the art\n" +
-		"Ctrl + X - clears the screen\n" +
+		"Left Click + drag - selects an area\n" +
+		"Ctrl + X - cut selection\n" +
+		"Ctrl + C - copy selection\n" +
 		"Ctrl + V - pastes content from clipboard to the canvas\n" +
 		"Ctrl + H - shows help screen\n" +
-		"Typing keys to the canvas\n" +
-		"Drag camera: hold SPACE + left mouse button"
+		"you can type keys to the canvas\n" +
+		"Drag camera: hold SPACE + left mouse button\n"
 
 	panelfontSize := float32(16.0)
 	text_size := rl.MeasureTextEx(font, helpText, panelfontSize, 0)
