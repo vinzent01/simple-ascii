@@ -142,4 +142,4 @@ run (linux)
 
 ## Improvements
 some improvements can be made in the future such as enabling custom fonts, and custom color, multiple layers of ascii
-select area or region and cut, and copy to another
+select area or region and cut, and copy (done), undo and redo with ctrl + z
