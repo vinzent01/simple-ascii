@@ -12,94 +12,6 @@ import (
 	"golang.design/x/clipboard"
 )
 
-// Represents the cursor
-type Cursor struct {
-	Position    rl.Vector2
-	Visible     bool
-	Active      bool
-	BlinkTime   float32
-	BlinkPeriod float32
-}
-
-func NewCursor() Cursor {
-	return Cursor{
-		Position:    rl.Vector2{X: 0, Y: 0},
-		Visible:     true,
-		Active:      false,
-		BlinkTime:   0.0,
-		BlinkPeriod: 0.25,
-	}
-}
-
-// / Updates the cursor blink
-func (c *Cursor) Update(dt float32, mousePos rl.Vector2, font rl.Font, fontSize float32) {
-	c.BlinkTime += dt
-	if c.BlinkTime > c.BlinkPeriod {
-		c.Visible = !c.Visible
-		c.BlinkTime = 0
-	}
-
-	if rl.IsMouseButtonDown(rl.MouseButtonLeft) {
-		c.Active = true
-		c.Position = world_to_cell_pos(mousePos, font, fontSize)
-	} else if rl.IsMouseButtonReleased(rl.MouseButtonRight) {
-		c.Active = false
-	}
-
-}
-
-func (c *Cursor) Draw(font rl.Font, fontSize float32) {
-	if c.Active && c.Visible {
-		DrawCursorAtCanvasCell(c.Position, font, fontSize)
-	}
-}
-
-func (c *Cursor) GetCharPressed() (Char, bool) {
-	typed_key := rl.GetCharPressed()
-
-	// Check if a character was pressed
-	if typed_key > 0 {
-		// Only add if it's a printable character
-		if (typed_key >= 32) && (typed_key <= 126) {
-			new_char := Char{
-				text:     string(typed_key),
-				position: c.Position,
-			}
-
-			return new_char, true
-		}
-	}
-
-	return Char{}, false
-}
-
-func (c *Cursor) GetInputPressed() int32 {
-	typed_key := rl.GetKeyPressed()
-
-	if typed_key == rl.KeyUp {
-		c.Position.Y -= 1
-	} else if typed_key == rl.KeyDown {
-		c.Position.Y += 1
-
-	} else if typed_key == rl.KeyLeft {
-		c.Position.X -= 1
-
-	} else if typed_key == rl.KeyRight {
-		c.Position.X += 1
-	}
-
-	return typed_key
-}
-
-// Represents an character in the canvas
-type Char struct {
-	text     string
-	position rl.Vector2
-}
-
-// represents the infinite character canvas
-type CharCanvas []Char
-
 func load_fonts() map[string]rl.Font {
 	fonts_path := "assets/fonts"
 
@@ -145,9 +57,34 @@ func cell_to_world_pos(position rl.Vector2, font rl.Font, font_size float32) rl.
 
 func draw_canvas(canvas CharCanvas, font rl.Font, font_size float32) {
 
-	for _, char := range canvas {
+	for _, char := range canvas.chars {
 		DrawCharAtCanvasCell(char, font, font_size, rl.White, rl.Black)
 	}
+}
+
+func draw_selected_canvas(canvas CharCanvas, selection CursorSelection, font rl.Font, font_size float32) {
+	selection.rect.Normalize()
+
+	selection.rect.EachY(func(y float32) {
+		selection.rect.EachX(func(x float32) {
+			pos := rl.Vector2{X: x, Y: y}
+			charAt, found := canvas.GetCharAt(pos)
+
+			var draw_char Char
+
+			if found {
+				draw_char = charAt
+			} else {
+				draw_char = Char{
+					text:     " ",
+					position: pos,
+				}
+			}
+
+			DrawCharAtCanvasCell(draw_char, font, font_size, rl.Black, rl.White)
+		})
+	})
+
 }
 
 func DrawCharAtCanvasCell(char Char, font rl.Font, font_size float32, foreground rl.Color, background rl.Color) {
@@ -176,111 +113,6 @@ func DrawCursorAtCanvasCell(cell_position rl.Vector2, font rl.Font, fontsize flo
 	)
 }
 
-func GetCharAtCanvas(char_canvas CharCanvas, cell_position rl.Vector2) (Char, bool) {
-	for _, char_entry := range char_canvas {
-		if rl.Vector2Equals(char_entry.position, cell_position) {
-			return char_entry, true
-		}
-	}
-
-	return Char{}, false
-}
-
-func DeleteCharAtCanvas(char_canvas CharCanvas, to_remove rl.Vector2) CharCanvas {
-
-	new_canvas := CharCanvas{}
-
-	for _, char := range char_canvas {
-		if !rl.Vector2Equals(char.position, to_remove) {
-			new_canvas = append(new_canvas, char)
-		}
-	}
-
-	return new_canvas
-}
-
-func InserCharAtCanvas(char_canvas CharCanvas, char Char) CharCanvas {
-	_, found_char := GetCharAtCanvas(char_canvas, char.position)
-	if found_char {
-		char_canvas = DeleteCharAtCanvas(char_canvas, char.position)
-	}
-	char_canvas = append(char_canvas, char)
-	return char_canvas
-}
-
-func CreateASCIIFromMap(char_canvas CharCanvas) string {
-	// Função auxiliar para achar o canto superior esquerdo
-	getTopLeftCorner := func() rl.Vector2 {
-		minX := float32(math.Inf(1))
-		minY := float32(math.Inf(1))
-
-		for _, obj := range char_canvas {
-			x, y := obj.position.X, obj.position.Y
-			if x < minX {
-				minX = x
-			}
-			if y < minY {
-				minY = y
-			}
-		}
-
-		if minX == float32(math.Inf(1)) {
-			minX = 0
-		}
-		if minY == float32(math.Inf(1)) {
-			minY = 0
-		}
-
-		return rl.Vector2{X: minX, Y: minY}
-	}
-
-	// Função auxiliar para achar o canto inferior direito
-	getBottomRightCorner := func() rl.Vector2 {
-		maxX := float32(math.Inf(-1))
-		maxY := float32(math.Inf(-1))
-
-		for _, obj := range char_canvas {
-			x, y := obj.position.X, obj.position.Y
-			if x > maxX {
-				maxX = x
-			}
-			if y > maxY {
-				maxY = y
-			}
-		}
-
-		if maxX == float32(math.Inf(-1)) {
-			maxX = 0
-		}
-		if maxY == float32(math.Inf(-1)) {
-			maxY = 0
-		}
-
-		return rl.Vector2{X: maxX, Y: maxY}
-	}
-
-	topLeft := getTopLeftCorner()
-	bottomRight := getBottomRightCorner()
-
-	asciiStr := "```\n"
-
-	for y := int(topLeft.Y); y <= int(bottomRight.Y); y++ {
-		for x := int(topLeft.X); x <= int(bottomRight.X); x++ {
-			pos := rl.Vector2{X: float32(x), Y: float32(y)}
-			char, found := GetCharAtCanvas(char_canvas, pos)
-			if found {
-				asciiStr += char.text
-			} else {
-				asciiStr += " " // vazio
-			}
-		}
-		asciiStr += "\n"
-	}
-
-	asciiStr += "```"
-	return asciiStr
-}
-
 func Save(ascii string) error {
 	saveFolder := "save"
 
@@ -306,38 +138,32 @@ func Save(ascii string) error {
 	return os.WriteFile(newFile, []byte(ascii), 0644)
 }
 
-func PasteASCIIAtCanvas(char_canvas CharCanvas, ascii string, startPos rl.Vector2) CharCanvas {
-	ascii = strings.ReplaceAll(ascii, "```", "")
-	lineList := []string{}
-	currentLine := ""
+func paste_clipboard_to_canvas(canvas *CharCanvas, ascii string, startPos rl.Vector2) {
+	text := strings.ReplaceAll(ascii, "```", "")
 
-	for _, r := range ascii {
-		if r == '\n' {
-			lineList = append(lineList, currentLine)
-			currentLine = ""
-		} else {
-			currentLine += string(r)
-		}
-	}
-	if currentLine != "" {
-		lineList = append(lineList, currentLine)
-	}
+	text_width := TextWidth(text)
+	text_height := TextHeight(text)
 
-	for y, line := range lineList {
+	lines := strings.Split(text, "\n")
+
+	startPos.X -= float32(text_width / 2)
+	startPos.Y -= float32(text_height / 2)
+
+	for y, line := range lines {
 		for x, ch := range line {
 			if ch != ' ' && ch != '\r' {
 				pos := rl.Vector2{
 					X: startPos.X + float32(x),
 					Y: startPos.Y + float32(y),
 				}
-				char_canvas = InserCharAtCanvas(char_canvas, Char{
+
+				canvas.InsertChar(Char{
 					text:     string(ch),
 					position: pos,
 				})
 			}
 		}
 	}
-	return char_canvas
 }
 
 func DrawHelpPanel(screenWidth, screenHeight int32, font rl.Font) {
@@ -403,7 +229,7 @@ func main() {
 
 	cursor := NewCursor()
 
-	var char_canvas CharCanvas = CharCanvas{}
+	var canvas CharCanvas = CharCanvas{}
 	camera := rl.Camera2D{}
 
 	camera.Offset = rl.Vector2{X: float32(screen_width) / 2.0, Y: float32(screen_height) / 2.0}
@@ -423,37 +249,52 @@ func main() {
 		ctrl_active = rl.IsKeyDown(rl.KeyLeftControl)
 		space_active = rl.IsKeyDown(rl.KeySpace)
 
+		// keyboard inputs
+		if ctrl_active && rl.IsKeyPressed(rl.KeyS) {
+			// save draw
+			text := canvas.ToText()
+			ascii := TextToASCII(text)
+			Save(ascii)
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyZero) {
+			canvas.chars = []Char{}
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyV) {
+			// paste input
+			clipboardText := string(clipboard.Read(clipboard.FmtText))
+			paste_clipboard_to_canvas(&canvas, clipboardText, cursor.Position)
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyH) {
+			showHelp = !showHelp
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyC) {
+			// copy
+			selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
+			clipboard.Write(clipboard.FmtText, []byte(selected_text))
+		} else if ctrl_active && rl.IsKeyPressed(rl.KeyX) {
+			// cut
+			selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
+			clipboard.Write(clipboard.FmtText, []byte(selected_text))
+			canvas.ClearSelection(cursor.CurrentSelection)
+			cursor.CurrentSelection = CursorSelection{}
+		}
+
 		if cursor.Active {
 			char, typed := cursor.GetCharPressed()
 			keypressed := cursor.GetInputPressed()
 
 			if typed {
-				char_canvas = InserCharAtCanvas(char_canvas, char)
+				canvas.InsertChar(char)
+				fmt.Println(canvas.chars)
 				cursor.Position.X += 1
+				cursor.CurrentSelection.selecting = false // desativa seleção ao digitar
 			}
 
 			if keypressed == rl.KeyBackspace {
-				char_canvas = DeleteCharAtCanvas(char_canvas, cursor.Position)
+				canvas.DeleteCharAt(cursor.Position)
 				cursor.Position.X -= 1
 			}
 
 			if keypressed == rl.KeyEnter {
 				cursor.Position.Y += 1
 			}
-		}
 
-		if ctrl_active && rl.IsKeyPressed(rl.KeyS) {
-			// save draw
-			ascii := CreateASCIIFromMap(char_canvas)
-			Save(ascii)
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyX) {
-			char_canvas = CharCanvas{}
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyV) {
-			// paste input
-			clipboardText := string(clipboard.Read(clipboard.FmtText))
-			char_canvas = PasteASCIIAtCanvas(char_canvas, clipboardText, cursor.Position)
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyH) {
-			showHelp = !showHelp
 		}
 
 		if rl.IsKeyPressed(rl.KeyF11) {
@@ -477,9 +318,14 @@ func main() {
 		// drawing
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Black)
-
 		rl.BeginMode2D(camera)
-		draw_canvas(char_canvas, current_font, font_size)
+
+		draw_canvas(canvas, current_font, font_size)
+
+		if cursor.CurrentSelection.selecting {
+			draw_selected_canvas(canvas, cursor.CurrentSelection, current_font, font_size)
+		}
+
 		cursor.Draw(current_font, font_size)
 		rl.EndMode2D()
 
