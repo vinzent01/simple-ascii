@@ -285,7 +285,6 @@ func main() {
 				canvas.InsertChar(char)
 				fmt.Println(canvas.chars)
 				cursor.Position.X += 1
-				cursor.CurrentSelection.selecting = false // desativa seleção ao digitar
 			}
 
 			if keypressed == rl.KeyBackspace {
@@ -295,6 +294,10 @@ func main() {
 
 			if keypressed == rl.KeyEnter {
 				cursor.Position.Y += 1
+			}
+
+			if keypressed != 0 {
+				cursor.CurrentSelection.selecting = false // desativa seleção ao digitar
 			}
 
 		}
