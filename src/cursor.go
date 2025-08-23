@@ -7,8 +7,8 @@ type CursorSelection struct {
 	selecting bool
 }
 
-// Represents the cursor
-type Cursor struct {
+// Represents the keyboard and cursor
+type KeyBoardCursor struct {
 	Position         rl.Vector2
 	Visible          bool
 	Active           bool
@@ -17,8 +17,8 @@ type Cursor struct {
 	CurrentSelection CursorSelection
 }
 
-func NewCursor() Cursor {
-	return Cursor{
+func NewCursor() KeyBoardCursor {
+	return KeyBoardCursor{
 		Position:         rl.Vector2{X: 0, Y: 0},
 		Visible:          true,
 		Active:           false,
@@ -29,7 +29,7 @@ func NewCursor() Cursor {
 }
 
 // / Updates the cursor blink
-func (c *Cursor) Update(dt float32, mousePos rl.Vector2, font rl.Font, fontSize float32) {
+func (c *KeyBoardCursor) Update(dt float32, mousePos rl.Vector2, font rl.Font, fontSize float32) {
 	c.BlinkTime += dt
 	if c.BlinkTime > c.BlinkPeriod {
 		c.Visible = !c.Visible
@@ -51,15 +51,19 @@ func (c *Cursor) Update(dt float32, mousePos rl.Vector2, font rl.Font, fontSize 
 		c.CurrentSelection = CursorSelection{} // limpa tudo
 	}
 
+	if rl.IsKeyDown(rl.KeySpace) {
+		c.CurrentSelection.selecting = false
+	}
+
 }
 
-func (c *Cursor) Draw(font rl.Font, fontSize float32) {
+func (c *KeyBoardCursor) Draw(font rl.Font, fontSize float32) {
 	if c.Active && c.Visible {
 		DrawCursorAtCanvasCell(c.Position, font, fontSize)
 	}
 }
 
-func (c *Cursor) GetCharPressed() (Char, bool) {
+func (c *KeyBoardCursor) GetCharPressed() (Char, bool) {
 	typed_key := rl.GetCharPressed()
 
 	// Check if a character was pressed
@@ -78,7 +82,7 @@ func (c *Cursor) GetCharPressed() (Char, bool) {
 	return Char{}, false
 }
 
-func (c *Cursor) GetInputPressed() int32 {
+func (c *KeyBoardCursor) GetInputPressed() int32 {
 	typed_key := rl.GetKeyPressed()
 
 	if typed_key == rl.KeyUp {

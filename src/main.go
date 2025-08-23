@@ -215,7 +215,7 @@ func main() {
 
 	var font_size float32 = 24.0
 	var ctrl_active bool = false
-	var space_active bool = false
+	var drag_active bool = false
 
 	if !ok {
 		fmt.Print("default font not found, exiting...")
@@ -249,7 +249,7 @@ func main() {
 		// update
 		cursor.Update(dt, mouse_world, current_font, font_size)
 		ctrl_active = rl.IsKeyDown(rl.KeyLeftControl)
-		space_active = rl.IsKeyDown(rl.KeySpace)
+		drag_active = rl.IsKeyDown(rl.KeySpace) && rl.IsMouseButtonDown(rl.MouseButtonLeft) || rl.IsMouseButtonDown(rl.MouseButtonMiddle)
 
 		// keyboard inputs
 		if ctrl_active && rl.IsKeyPressed(rl.KeyS) {
@@ -257,24 +257,34 @@ func main() {
 			text := canvas.ToText()
 			ascii := TextToASCII(text)
 			Save(ascii)
+		} else if cursor.CurrentSelection.selecting {
+			if ctrl_active && rl.IsKeyPressed(rl.KeyV) {
+				// paste input
+				clipboardText := string(clipboard.Read(clipboard.FmtText))
+				paste_clipboard_to_canvas(&canvas, clipboardText, cursor.Position)
+				cursor.CurrentSelection.selecting = false
+			} else if ctrl_active && rl.IsKeyPressed(rl.KeyC) {
+				// copy
+				selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
+
+				tmpClipboard := selected_text
+				cursor.CurrentSelection.selecting = false
+
+				clipboard.Write(clipboard.FmtText, []byte(tmpClipboard))
+			} else if ctrl_active && rl.IsKeyPressed(rl.KeyX) {
+				selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
+
+				tmpClipboard := selected_text
+
+				canvas.ClearSelection(cursor.CurrentSelection)
+				cursor.CurrentSelection.selecting = false
+
+				clipboard.Write(clipboard.FmtText, []byte(tmpClipboard))
+			}
 		} else if ctrl_active && rl.IsKeyPressed(rl.KeyZero) {
 			canvas.chars = []Char{}
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyV) {
-			// paste input
-			clipboardText := string(clipboard.Read(clipboard.FmtText))
-			paste_clipboard_to_canvas(&canvas, clipboardText, cursor.Position)
 		} else if ctrl_active && rl.IsKeyPressed(rl.KeyH) {
 			showHelp = !showHelp
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyC) {
-			// copy
-			selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
-			clipboard.Write(clipboard.FmtText, []byte(selected_text))
-		} else if ctrl_active && rl.IsKeyPressed(rl.KeyX) {
-			// cut
-			selected_text := canvas.TextFromSelection(cursor.CurrentSelection)
-			clipboard.Write(clipboard.FmtText, []byte(selected_text))
-			canvas.ClearSelection(cursor.CurrentSelection)
-			cursor.CurrentSelection = CursorSelection{}
 		}
 
 		if cursor.Active {
@@ -283,7 +293,6 @@ func main() {
 
 			if typed {
 				canvas.InsertChar(char)
-				fmt.Println(canvas.chars)
 				cursor.Position.X += 1
 			}
 
@@ -297,7 +306,9 @@ func main() {
 			}
 
 			if keypressed != 0 {
-				cursor.CurrentSelection.selecting = false // desativa seleção ao digitar
+				if keypressed != rl.KeyLeftControl && keypressed != rl.KeyLeftShift {
+					cursor.CurrentSelection.selecting = false // desativa seleção ao digitar
+				}
 			}
 
 		}
@@ -314,7 +325,7 @@ func main() {
 		)
 
 		// camera movement
-		if space_active && rl.IsMouseButtonDown(rl.MouseButtonLeft) {
+		if drag_active {
 			mouse_delta := rl.GetMouseDelta()
 			camera.Target.X -= mouse_delta.X
 			camera.Target.Y -= mouse_delta.Y
